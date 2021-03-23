@@ -1,0 +1,105 @@
+```{r}
+library(dplyr)
+library(tidyr)
+```
+
+```{r}
+df <- read.csv("Airbnb_Milan.csv")
+```
+
+```{r}
+new_df <- subset(df, select = c("host_is_superhost", "host_identity_verified", "bathrooms", "bedrooms", "daily_price", "security_deposit", "minimum_nights", "number_of_reviews", "review_scores_rating"))
+```
+
+```{r}
+new_df
+```
+
+```{r}
+new_df$host_is_superhost <- recode(as.character(new_df$host_is_superhost),
+                              "0" = "SI",
+                              "1" = "NO") %>% as.factor
+```
+
+```{r}
+new_df$host_identity_verified <- recode(as.character(new_df$host_identity_verified),
+                                    "0" = "VERIFICA",
+                                    "1" = "NO VERIFICA") %>% as.factor 
+```
+
+```{r}
+summary(new_df)
+```
+                         
+```{r}
+new_df[new_df$minimum_nights <= 7,]
+```
+                          
+```{r}
+tapply(new_df$daily_price, new_df$host_identity_verified, mean)
+```
+
+```{r}
+tapply(new_df$number_of_reviews, new_df$host_is_superhost, max)
+```
+
+```{r}
+tapply(new_df$review_scores_rating, new_df$host_is_superhost, mean)
+```
+
+```{r}
+categorize.score <- function(df.column){
+  
+  resultados <- c()
+  i <- 1
+  
+  for (fila in 1:length(df.column)) {
+    if (df.column[fila] <= 49){
+      resultados[i] <- "NO ACONSEJABLE"
+      i <- i + 1
+      
+    } else if ((df.column[fila] >= 50) && (df.column[fila] <= 75)) {
+      resultados[i] <- "ESTÁNDAR"
+      i <- i + 1
+      
+    } else {
+      resultados[i] <- "TOP"
+      i <- i + 1
+    }
+  }
+  
+  return (as.factor(resultados))
+}
+new_df$CATEGORIA <- categorize.score(new_df$review_scores_rating)
+```
+
+```{r}
+table(new_df$CATEGORIA)
+```
+
+```{r}
+library(ggplot2)
+```
+
+```{r}
+ggplot(new_df) +
+geom_histogram(mapping = aes(daily_price), color = "red", fill = "lightblue", alpha = 0.6)
+```
+
+```{r}
+ggplot(new_df) + 
+  geom_point(mapping = aes(x = bedrooms, y = bathrooms)) + geom_smooth(aes(x = bedrooms, y = bathrooms), method = lm)
+```
+
+```{r}
+ggplot(new_df) +
+geom_histogram(mapping = aes(number_of_reviews, fill = host_identity_verified), color = "red" )
+```
+
+```{r}
+ggplot(new_df) +
+  geom_density(mapping = aes(x = host_is_superhost, y = security_deposit, colour = CATEGORIA)) + facet_wrap(~CATEGORIA)
+```
+
+
+
